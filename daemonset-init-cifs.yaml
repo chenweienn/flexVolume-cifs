@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: init-cifs
+  namespace: node-installer
+  labels:
+    app: init-cifs
+spec:
+  selector:
+    matchLabels:
+      app: init-cifs
+  template:
+    metadata:
+      labels:
+        app: init-cifs
+    spec:
+      tolerations:
+      # this toleration is to have the daemonset runnable on master nodes
+      # remove it if your masters can't run pods
+      - key: node-role.kubernetes.io/master
+        effect: NoSchedule
+      hostNetwork: true
+      hostPID: true
+      volumes:
+      - name: install-script-vol
+        configMap:
+          name: prepare-cifs-flecvolume-driver
+      - name: host-vol
+        hostPath:
+          path: /home/vcap/cifs-install
+      initContainers:
+      - name: init-cifs
+        image: harbor.slot-59.pez.vmware.com/docker-hub-cache/chenweien/ubuntu-cifs-utils:v1
+        command:
+        - /bin/bash
+        - -c
+        - "cp /tmp/cifs-install-script/install.sh /tmp/host/; /usr/bin/nsenter -m/proc/1/ns/mnt -- chmod u+x /home/vcap/cifs-install/install.sh; /usr/bin/nsenter -m/proc/1/ns/mnt /home/vcap/cifs-install/install.sh"
+        volumeMounts:
+        - name: install-script-vol
+          mountPath: /tmp/cifs-install-script
+        - name: host-vol
+          mountPath: /tmp/host
+        securityContext:
+          privileged: true
+      containers:
+      - name: test-cifs
+        image: harbor.slot-59.pez.vmware.com/docker-hub-cache/chenweien/ubuntu-cifs-utils:v1
+        command:
+        - /bin/bash
+        stdin: true 
+        securityContext:
+          privileged: true
