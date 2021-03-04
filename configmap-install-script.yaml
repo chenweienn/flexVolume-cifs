@@ -1,3 +1,5 @@
+# this configMap contains the script to run in each k8s node
+# the script will install required packages and download the driver at https://github.com/fstab/cifs
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -32,9 +34,3 @@ data:
     curl -L -O https://raw.githubusercontent.com/fstab/cifs/master/cifs
     chmod 755 cifs
     ./cifs init
-    #CIFS_INIT_RESULT=$(./cifs init)
-    #if [[ -n $(echo $CIFS_INIT_RESULT | grep Success) ]]; then
-    #  echo "cifs init success"
-    #else
-    #  echo $CIFS_INIT_RESULT
-    #fi

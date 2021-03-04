@@ -19,8 +19,12 @@ spec:
       # remove it if your masters can't run pods
       - key: node-role.kubernetes.io/master
         effect: NoSchedule
-      hostNetwork: true
+      #hostNetwork: true
       hostPID: true
+      # people has asked for the same, i.e, to allow run-once pod in daemonset
+      # https://github.com/kubernetes/kubernetes/issues/17182
+      # https://github.com/kubernetes/kubernetes/issues/36601
+      # restartPolicy: OnFailure
       volumes:
       - name: install-script-vol
         configMap:
@@ -30,9 +34,9 @@ spec:
           path: /home/vcap/cifs-install
       initContainers:
       - name: init-cifs
-        image: harbor.slot-59.pez.vmware.com/docker-hub-cache/chenweien/ubuntu-cifs-utils:v1
+        image: harbor.slot-59.pez.vmware.com/docker-hub-cache/library/alpine:latest
         command:
-        - /bin/bash
+        - /bin/sh
         - -c
         - "cp /tmp/cifs-install-script/install.sh /tmp/host/; /usr/bin/nsenter -m/proc/1/ns/mnt -- chmod u+x /home/vcap/cifs-install/install.sh; /usr/bin/nsenter -m/proc/1/ns/mnt /home/vcap/cifs-install/install.sh"
         volumeMounts:
@@ -43,10 +47,5 @@ spec:
         securityContext:
           privileged: true
       containers:
-      - name: test-cifs
-        image: harbor.slot-59.pez.vmware.com/docker-hub-cache/chenweien/ubuntu-cifs-utils:v1
-        command:
-        - /bin/bash
-        stdin: true 
-        securityContext:
-          privileged: true
+      - name: pause
+        image: k8s.gcr.io/pause
